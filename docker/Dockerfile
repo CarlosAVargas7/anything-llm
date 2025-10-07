@@ -22,7 +22,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
         xdg-utils git build-essential ffmpeg && \
     mkdir -p /etc/apt/keyrings && \
     curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
-    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_18.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list && \
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list && \
     apt-get update && \
     # Install node and yarn
     apt-get install -yq --no-install-recommends nodejs && \
@@ -88,7 +88,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
         xdg-utils git build-essential ffmpeg && \
     mkdir -p /etc/apt/keyrings && \
     curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
-    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_18.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list && \
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list && \
     apt-get update && \
     # Install node and yarn
     apt-get install -yq --no-install-recommends nodejs && \
@@ -117,15 +117,16 @@ COPY --chown=anythingllm:anythingllm ./docker/.env.example /app/server/.env
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh && \
     chmod +x /usr/local/bin/docker-healthcheck.sh
 
+USER anythingllm
+WORKDIR /app
+
 #############################################
 # COMMON BUILD FLOW FOR ALL ARCHS
 #############################################
 
 # hadolint ignore=DL3006
-FROM build-${TARGETARCH} AS build
+FROM ${TARGETARCH:+build-}${TARGETARCH:-amd64} AS build
 RUN echo "Running common build flow of AnythingLLM image for all architectures"
-
-USER anythingllm
 WORKDIR /app
 
 # Install & Build frontend layer
@@ -155,7 +156,6 @@ ENV PUPPETEER_DOWNLOAD_BASE_URL=https://storage.googleapis.com/chrome-for-testin
 RUN yarn install --production --network-timeout 100000 && yarn cache clean
 
 WORKDIR /app
-USER anythingllm
 
 # Since we are building from backend-build we just need to move built frontend into server/public
 FROM backend-build AS production-build
